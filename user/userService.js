@@ -24,7 +24,34 @@ async function findByUsername(username) {
   }
 }
 
+async function findById(id) {
+  try {
+    const { rows } = await db.query('SELECT * FROM users WHERE id=$1', [id]);
+    if (rows.length) {
+      return rows[0];
+    }
+    return null;
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+async function update(password, id) {
+  try {
+    const { rows } = await db.query('UPDATE users SET password = $1 WHERE id = $2 RETURNING *', [password, id]);
+    console.log(rows);
+    if (rows.length) {
+      return rows[0];
+    }
+    return null;
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
 module.exports = {
   create,
-  findByUsername
+  findByUsername,
+  findById,
+  update
 }
