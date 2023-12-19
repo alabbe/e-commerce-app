@@ -35,8 +35,24 @@ async function findById(req, res, next) {
   }
 }
 
+async function update(req, res, next) {
+  try {
+    const orderId = req.params.orderId;
+    const { total, status } = req.body;
+    if (!orderId) {
+      throw new HttpError('Order Id is mandatory.', 400);
+    }
+    const order = await orderService.update(total, status, orderId);
+    res.status(200).send(order);
+  } catch (err) {
+    console.error(`Error while updating order`, err.message);
+    next(err);
+  }
+}
+
 
 module.exports = {
   findAll,
-  findById
+  findById,
+  update
 };

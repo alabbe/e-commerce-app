@@ -2,7 +2,7 @@ const db = require('../db');
 
 async function add(orderId, productId, quantity) {
   try {
-    const { rows } = await db.query('INSERT INTO orders_products(carts_id, products_id, quantity) VALUES($1, $2, $3) RETURNING *', [orderId, productId, quantity]);
+    const { rows } = await db.query('INSERT INTO orders_products(orders_id, products_id, quantity) VALUES($1, $2, $3) RETURNING *', [orderId, productId, quantity]);
     if (rows.length) {
       return rows[0];
     }

@@ -1,8 +1,8 @@
 const db = require('../db');
 
-async function create(userId, total) {
+async function create(userId, total, status) {
   try {
-    const { rows } = await db.query('INSERT INTO orders (users_id, total) VALUES($1, $2) RETURNING *', [userId, total]);
+    const { rows } = await db.query('INSERT INTO orders (users_id, total, status) VALUES($1, $2, $3) RETURNING *', [userId, total, status]);
     if (rows.length) {
       return rows[0];
     }
@@ -36,8 +36,21 @@ async function findById(orderId) {
   }
 }
 
+async function update(total, status, orderId) {
+  try {
+    const { rows } = await db.query('UPDATE orders SET total = $1, status = $2 WHERE id = $3 RETURNING *', [total, status, orderId]);
+    if (rows.length) {
+      return rows[0];
+    }
+    return null;
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
 module.exports =  {
   create,
   findAll,
-  findById
+  findById,
+  update
 }

@@ -1,6 +1,8 @@
 const cartService = require('./cartService');
 const cartProductService = require('./cartProductService');
 const userService = require('../user/userService');
+const orderService = require('../order/orderService');
+const orderProductService = require('../order/orderProductService');
 const { HttpError } = require("../utils/http_error");
 
 async function findByUser(req, res, next) {
@@ -133,6 +135,40 @@ async function removeProduct(req, res, next) {
   }
 }
 
+async function checkout(req, res, next) {
+  try {
+    // recuperer le panier
+    const cartId = req.params.cartId;
+    if (!cartId) {
+      throw new HttpError('Cart Id is mandatory.', 400);
+    }
+    const cart = await cartService.findById(cartId);
+    if (!cart) {
+      throw new HttpError('No cart found', 404);
+    }
+    // recuperer les items du panier
+    const cartProducts = await cartProductService.findByCart(cart.id);
+    // creer l'order
+    const order = await orderService.create(cart.users_id, 0, 'PENDING');
+    // calculer le montant total de la commande et ajouter les items à l'order
+    let total = 0;
+    order.products = [];
+    cartProducts.forEach(async (product) => {
+      total += Number(product.quantity) * Number(product.price);
+      const orderedProduct = await orderProductService.add(order.id, product.id, product.quantity);
+      order.products.push(orderedProduct);
+    })
+    // faire un faux paiement, changer le status de l'order
+
+    const completeOrder = await orderService.update(total, "COMPLETE", order.id);
+    //completeOrder.products = order.products.map((product) => product);
+    res.status(200).send(completeOrder);
+  } catch (err) {
+    console.error(`Error while checkout cart`, err.message);
+    next(err);
+  }
+}
+
 
 module.exports = {
   findByUser,
@@ -140,5 +176,6 @@ module.exports = {
   create,
   addProduct,
   updateProduct,
-  removeProduct
+  removeProduct,
+  checkout
 };
