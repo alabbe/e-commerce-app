@@ -3,7 +3,7 @@ const express = require('express');
 const LocalStrategy = require('passport-local'); */
 const bodyParser = require('body-parser');
 const app = express();
-const { PORT } = require('./config');
+const { PORT, DB } = require('./config');
 const productRouter = require('./product/productRoutes');
 const userRouter = require('./user/userRoutes');
 const cartRouter = require('./cart/cartRoutes');
@@ -24,11 +24,11 @@ passport.use(new LocalStrategy(
     }
   }
 )); */
-
-app.use('/products', productRouter);
-app.use('/users', userRouter);
-app.use('/cart', cartRouter);
-app.use('/orders', orderRouter);
+console.log('database name:', DB.PGDATABASE);
+app.use('/api/products', productRouter);
+app.use('/api/users', userRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/orders', orderRouter);
 
  // Error Handler
  app.use((err, req, res, next) => {
@@ -44,3 +44,5 @@ async function startServer() {
 }
 
 startServer();
+
+module.exports = app;

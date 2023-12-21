@@ -17,12 +17,12 @@ const { HttpError } = require("../utils/http_error");
 
 async function findById(req, res, next) {
   try {
-    const productId = req.params.productId;
+    const productId = Number(req.params.productId);
     // call the service which retrieves the product by the given id
     if (!productId) {
       throw new HttpError('Product Id is mandatory.', 400);
     }
-    const product = productService.findById(productId);
+    const product =  await productService.findById(productId);
     if (!product) {
       throw new HttpError('Product doesnt exist.', 404);
     }
@@ -35,7 +35,7 @@ async function findById(req, res, next) {
 
 async function findByCategory(req, res, next) {
   try {
-    const categoryId = req.query.category;
+    const categoryId = Number(req.query.category);
     if (!categoryId) {
       throw new HttpError('Category Id is mandatory.', 400);
     }

@@ -4,17 +4,23 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon -r dotenv/config app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon -r dotenv-flow/config app.js",
+    "test": "mocha -r dotenv-flow/config ./test/*/*.test.js --node-env=test"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.3.1",
+    "dotenv-flow": "^4.0.1",
     "express": "^4.17.1",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
     "pg": "^8.11.3"
   },
   "devDependencies": {
-    "nodemon": "^2.0.6"
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
+    "nodemon": "^2.0.6",
+    "supertest": "^6.3.3"
   }
 }
