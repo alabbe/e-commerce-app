@@ -36,6 +36,18 @@ async function findById(id) {
   }
 }
 
+async function findAll() {
+  try {
+    const { rows } = await db.query('SELECT * FROM users');
+    if (rows.length) {
+      return rows;
+    }
+    return null;
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
 async function update(password, id) {
   try {
     const { rows } = await db.query('UPDATE users SET password = $1 WHERE id = $2 RETURNING *', [password, id]);
@@ -53,5 +65,6 @@ module.exports = {
   create,
   findByUsername,
   findById,
+  findAll,
   update
 }
