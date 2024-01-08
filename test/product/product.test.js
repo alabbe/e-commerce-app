@@ -19,6 +19,10 @@ describe('/api/products routes', function () {
     await productFactory.addCategoryToProduct(category.rows[0].id, product3.rows[0].id);
   });
 
+  this.afterAll(async function() {
+    await productFactory.dropProductAndCategory();
+  });
+
   describe('GET /products/{productId}', function () {
     it('returns a single product object', function () {
       return request(app)

@@ -14,6 +14,10 @@ describe('/api/users routes', function () {
     await userFactory.createUser('user3', 'password3');
   });
 
+  this.afterAll(async function () {
+    await userFactory.dropUser();
+  });
+
   describe('GET /users', function () {
     it('returns an array of all users', async function () {
       return request(app)
@@ -164,7 +168,7 @@ describe('/api/users routes', function () {
         .expect(404);
     });
 
-    it('called with an invalid ID does not change the database array', function () {
+    it('called with an invalid ID does not change the database array', async function () {
       let initialUsersArray;
       return request(app)
         .get('/api/users')

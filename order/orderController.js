@@ -1,6 +1,7 @@
 const orderService = require('./orderService');
 const userService = require('../user/userService');
 const orderProductService = require('./orderProductService');
+const { HttpError } = require("../utils/http_error");
 
 async function findAll(req, res, next) {
   try {
@@ -22,11 +23,14 @@ async function findAll(req, res, next) {
 
 async function findById(req, res, next) {
   try {
-    const orderId = req.params.orderId;
+    const orderId = Number(req.params.orderId);
     if (!orderId) {
       throw new HttpError('Order Id is mandatory.', 400);
     }
     const order = await orderService.findById(orderId);
+    if (!order) {
+      throw new HttpError('Order doesnt exist.', 404);
+    }
     order.products = await orderProductService.findByOrder(orderId);
     res.status(200).send(order);
   } catch (err) {
