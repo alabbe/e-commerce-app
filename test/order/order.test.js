@@ -32,7 +32,7 @@ describe('/api/orders routes', function () {
 
   });
 
-  this.afterAll(async function() {
+  this.afterAll(async function () {
     await orderFactory.dropOrder();
     await productFactory.dropProductAndCategory();
     await userFactory.dropUser();
@@ -61,6 +61,7 @@ describe('/api/orders routes', function () {
           expect(order).to.have.ownProperty('total');
           expect(order).to.have.ownProperty('created_at');
           expect(order).to.have.ownProperty('status');
+          expect(order.products.length).to.be.equal(1);
         });
     });
 
@@ -108,5 +109,83 @@ describe('/api/orders routes', function () {
       });
 
     });
+
+  describe('PUT /orders/{orderId}', function () {
+    it('updates the correct order and returns it', async function () {
+      let initialOrder;
+      let updatedOrder;
+      return request(app)
+        .get('/api/orders/1')
+        .then((response) => {
+          initialOrder = response.body
+        })
+        .then(() => {
+          updatedOrder = Object.assign({}, initialOrder, { status: 'COMPLETE' });
+          return request(app)
+            .put('/api/orders/1')
+            .send(updatedOrder);
+        })
+        .then((response) => {
+          expect(response.body).to.be.deep.equal(updatedOrder);
+        });
+    });
+
+    it('updates the correct order and persists to the database', async function () {
+      let initialOrder;
+      let updatedOrder;
+      return request(app)
+        .get('/api/orders/1')
+        .then((response) => {
+          initialOrder = response.body
+        })
+        .then(() => {
+          updatedOrder = Object.assign({}, initialOrder, { status: 'COMPLETE' });
+          return request(app)
+            .put('/api/orders/1')
+            .send(updatedOrder);
+        })
+        .then(() => {
+          return request(app)
+            .get('/api/orders/1');
+        })
+        .then((response) => response.body)
+        .then(userFromDatabase => {
+          expect(userFromDatabase.status).to.equal('COMPLETE');
+        });
+    });
+
+    it('called with a non-numeric ID returns a 400 error', function () {
+      return request(app)
+        .put('/api/orders/notAnId')
+        .expect(400);
+    });
+
+    it('called with an invalid ID returns a 404 error', function () {
+      return request(app)
+        .put('/api/orders/450')
+        .expect(404);
+    });
+
+    it('called with an invalid ID does not change the database array', async function () {
+      let initialOrdersArray;
+      return request(app)
+        .get('/api/orders')
+        .then((response) => {
+          initialOrdersArray = response.body;
+        })
+        .then(() => {
+          return request(app)
+            .put('/api/orders/notAnId')
+            .send({ key: 'value' });
+        })
+        .then(() => {
+          return request(app).get('/api/orders');
+        })
+        .then((afterPutResponse) => {
+          let postRequestUserArray = afterPutResponse.body;
+          expect(initialOrdersArray).to.be.deep.equal(postRequestUserArray);
+        });
+    });
+  });
 
 });

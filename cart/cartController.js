@@ -2,6 +2,7 @@ const cartService = require('./cartService');
 const cartProductService = require('./cartProductService');
 const userService = require('../user/userService');
 const orderService = require('../order/orderService');
+const productService = require('../product/productService');
 const orderProductService = require('../order/orderProductService');
 const { HttpError } = require("../utils/http_error");
 
@@ -16,7 +17,9 @@ async function findByUser(req, res, next) {
       throw new HttpError('User doesnt exist.', 404);
     }
     const cart = await cartService.findByUser(userId);
-    cart.products = await cartProductService.findByCart(cart.id);
+    if (cart) {
+      cart.products = await cartProductService.findByCart(cart.id);
+    }
     res.status(200).send(cart);
   } catch (err) {
     console.error(`Error while getting cart by user`, err.message);
@@ -26,11 +29,14 @@ async function findByUser(req, res, next) {
 
 async function findById(req, res, next) {
   try {
-    const cartId = req.params.cartId;
+    const cartId = Number(req.params.cartId);
     if (!cartId) {
       throw new HttpError('Cart Id is mandatory.', 400);
     }
     const cart = await cartService.findById(cartId);
+    if (!cart) {
+      throw new HttpError('Cart doesnt exist.', 404);
+    }
     cart.products = await cartProductService.findByCart(cartId);
     res.status(200).send(cart);
   } catch (err) {
@@ -41,7 +47,7 @@ async function findById(req, res, next) {
 
 async function create(req, res, next) {
   try {
-    const userId = req.query.user;
+    const userId = Number(req.query.user);
     if (!userId) {
       throw new HttpError('User Id is mandatory.', 400);
     }
@@ -50,11 +56,13 @@ async function create(req, res, next) {
       throw new HttpError('User doesnt exist.', 404);
     }
     // recuperer le panier si il existe deja
-    const cart = await cartService.findByUser(userId);
-    if (!cart) {
-      cart = await cartService.create(userId);
+    const existingCart = await cartService.findByUser(userId);
+    if (!existingCart) {
+      const cart = await cartService.create(userId);
+      res.status(201).send(cart);
+    } else {
+      res.status(200).send(existingCart);
     }
-    res.status(200).send(cart);
   } catch (err) {
     console.error(`Error while creating cart`, err.message);
     next(err);
@@ -64,7 +72,7 @@ async function create(req, res, next) {
 async function addProduct(req, res, next) {
   try {
     // recuperer le user
-    const userId = req.query.user;
+    const userId = Number(req.query.user);
     const { productId, quantity } = req.body;
     if (!userId) {
       throw new HttpError('User Id is mandatory.', 400);
@@ -79,7 +87,7 @@ async function addProduct(req, res, next) {
       throw new HttpError('No cart found for this user.', 404);
     }
     const newproduct = await cartProductService.add(cart.id, productId, quantity);
-    res.status(200).send(newproduct);
+    res.status(201).send(newproduct);
   } catch (err) {
     console.error(`Error while adding product to cart`, err.message);
     next(err);
@@ -89,15 +97,19 @@ async function addProduct(req, res, next) {
 async function updateProduct(req, res, next) {
   try {
     // recuperer le user
-    const userId = req.query.user;
-    const productId = req.params.productId;
+    const userId = Number(req.query.user);
+    const productId = Number(req.params.productId);
     const quantity = req.body.quantity;
-    if (!userId) {
-      throw new HttpError('User Id is mandatory.', 400);
+    if (!userId || !productId) {
+      throw new HttpError('User Id and Product are mandatory and must be in numeric format.', 400);
     }
     const user = await userService.findById(userId);
     if (!user) {
       throw new HttpError('User doesnt exist.', 404);
+    }
+    const product = await productService.findById(productId);
+    if (!product) {
+      throw new HttpError('Product doesnt exist.', 404);
     }
     // recuperer le panier
     const cart = await cartService.findByUser(userId);
@@ -114,21 +126,25 @@ async function updateProduct(req, res, next) {
 
 async function removeProduct(req, res, next) {
   try {
-    const userId = req.query.user;
-    const productId = req.params.productId;
-    if (!userId) {
-      throw new HttpError('User Id is mandatory.', 400);
+    const userId = Number(req.query.user);
+    const productId = Number(req.params.productId);
+    if (!userId || !productId) {
+      throw new HttpError('User Id and Product are mandatory and must be in numeric format.', 400);
     }
     const user = await userService.findById(userId);
     if (!user) {
       throw new HttpError('User doesnt exist.', 404);
+    }
+    const product = await productService.findById(productId);
+    if (!product) {
+      throw new HttpError('Product doesnt exist.', 404);
     }
     const cart = await cartService.findByUser(userId);
     if (!cart) {
       throw new HttpError('No cart found for this user.', 404);
     }
     const removedProduct = await cartProductService.remove(cart.id, productId);
-    res.status(200).send(removedProduct);
+    res.status(204).send(removedProduct);
   } catch (err) {
     console.error(`Error while deleting product from cart`, err.message);
     next(err);

@@ -41,13 +41,18 @@ async function findById(req, res, next) {
 
 async function update(req, res, next) {
   try {
-    const orderId = req.params.orderId;
+    const orderId = Number(req.params.orderId);
     const { total, status } = req.body;
     if (!orderId) {
       throw new HttpError('Order Id is mandatory.', 400);
     }
-    const order = await orderService.update(total, status, orderId);
-    res.status(200).send(order);
+    const checkOrderExists = await orderService.findById(orderId);
+    if (!checkOrderExists) {
+      throw new HttpError('Order doesnt exist.', 404);
+    }
+    const udpatedOrder = await orderService.update(total, status, orderId);
+    udpatedOrder.products = await orderProductService.findByOrder(orderId);
+    res.status(200).send(udpatedOrder);
   } catch (err) {
     console.error(`Error while updating order`, err.message);
     next(err);
